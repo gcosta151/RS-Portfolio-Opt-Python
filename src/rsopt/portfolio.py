@@ -19,8 +19,7 @@ from rsopt import optimization as opt
 # Class Portfolio
 #-------------------------------------------------------------------------------
 class Portfolio:
-    """
-    Portfolio object 
+    """Portfolio object 
 
     Inputs
     ------
