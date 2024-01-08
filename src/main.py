@@ -14,7 +14,8 @@ from rsopt import portfolio as po
 #-------------------------------------------------------------------------------
 # Load data
 #-------------------------------------------------------------------------------
-"""Select the parameters for the portfolio optimization backtest
+"""
+Select the parameters for the portfolio optimization backtest
 - daterange: Backtest start and end dates
 - calibration: HMM calibration window (in years)
 - lookback: lookback window used to calibrate the factor models (in months)
@@ -25,7 +26,8 @@ calibration = pd.DateOffset(years=30)
 lookback:int = 60
 rebalfreq:int = 6
 
-"""Load historical data from Kenneth French's website (Fama-French data)
+"""
+Load historical data from Kenneth French's website (Fama-French data)
 - sourcedata: load one of the following datasets as the asset data:
     - 10_Industry_Portfolios
     - 30_Industry_Portfolios
@@ -45,24 +47,30 @@ data = dl.HistoricalData(sourcedata,
 #-------------------------------------------------------------------------------
 # Conduct portfolio backtests
 #-------------------------------------------------------------------------------
-"""Assign the parameters to be used in the regime-switching models 
+"""
+Assign the parameters to be used in the regime-switching models 
 - rsfeatures: list of the features to be used to fit the HMM
 - n_states: numer of states to which to fit the HMM
 """
 rsfeatures = ['Mkt-RF']
 n_states:int = 2
 
-"""models: List of optimization models to compare. Choose between
-- mvo: mean-variance portfolio with a target return
-- minvar: minimum variance portfolio
-- rp: risk parity portfolio
-- rsmvo: regime-switching mean-variance portfolio
-- rsminvar: regime-switching minimum variance portfolio
-- rsrp: regime-switching risk parity portfolio
+"""
+models: dictionary of the models to be used in the backtest. Each model is
+identified by a key, which is also serves as the name of the portfolio.
+For each entry in the dict, the value is a list with two elements.
+- First element: investment strategy to use for portfolio construction
+    - MinVar: minimum variance portfolio
+    - MVO: mean-variance portfolio
+    - RiskParity: risk parity portfolio
+- Second element: flag indicating whether to use a regime-switching factor model
+for parameter estimation
+    - 0: no regime-switching
+    - 1: regime-switching
 
 constraints: List of constraints to be used in the optimization models. 
-    Note: Currently, only the 'longonly' constraint is available. Removing this
-    constraint will allow for short selling
+    Note: Currently, only the 'longonly' constraint is available. Removing 
+    this constraint will allow for short selling.
 """
 models = {'minvar': ['MinVar', 0],
           'rsminvar': ['MinVar', 1],
@@ -93,7 +101,9 @@ po.backtest(portfolios,
 #-------------------------------------------------------------------------------
 # Results
 #-------------------------------------------------------------------------------
-# Plot the wealth evolution and rolling Sharpe ratios of all portfolios
+"""
+Plot the wealth evolution and rolling Sharpe ratios of all portfolios
+"""
 wealth = [portfolios[i].wealth for i in range(len(portfolios))]
 wealth = pd.concat(wealth, axis=1)
 wealth.plot()
