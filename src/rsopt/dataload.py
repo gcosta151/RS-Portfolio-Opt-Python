@@ -1,18 +1,18 @@
 # dataload library
 #
 # Prepared by:    Giorgio Costa
-# Last revision:  25-Dec-2023
+# Last revision:  11-Apr-2024
 #
-#-------------------------------------------------------------------------------
+#===============================================================================
 # Import packages
-#-------------------------------------------------------------------------------
+#===============================================================================
 import pandas as pd
 from pandas_datareader import get_data_famafrench as get_ff
 import os
 
-#-------------------------------------------------------------------------------
+#===============================================================================
 # Class HistoricalData
-#-------------------------------------------------------------------------------
+#===============================================================================
 class HistoricalData:
     """HistoricalData object
     Load historical data from Kenneth French's data library
@@ -20,29 +20,43 @@ class HistoricalData:
     
     Inputs
     ------
-    sourcedata: Name of the dataset to load
-    daterange: Start and end dates for the data
-    calibration: Number of years required to calibrate the HMM
-    freq: Frequency of the data (daily, weekly, monthly)
-    use_cache: Boolean indicating whether to use cached data
-    save_results: Boolean indicating whether to save the results to cache
+    sourcedata: str
+        Name of the dataset to load
+    daterange: list
+        Start and end dates for the data
+    calibration: int
+        Number of years required to calibrate the HMM
+    freq: str
+        Frequency of the data (daily, weekly, monthly)
+    use_cache: bool
+        Boolean indicating whether to use cached data
+    save_results: bool
+        Boolean indicating whether to save the results to cache
     
-    Outputs
+    Attributes
+    ----------
+    arets: pd.DataFrame
+        T x N array of asset returns for N assets and T observations
+    frets: pd.DataFrame
+        T x M array of factor returns for M factors and T observations
+    riskfree: pd.Series
+        T x 1 array of risk-free returns
+    assets: list
+        List of asset names
+    features: list
+        List of feature names
+
+    Methods
     -------
-    HistoricalData object with the following fields
-    arets: T x N array of asset returns for N assets and T observations
-    frets: T x M array of factor returns for M factors and T observations
-    riskfree: T x 1 array of risk-free returns
-    assets: List of asset names
-    features: List of feature names
+    load_data(cache_path, use_cache, save_results)
     """
     def __init__(self,
-                 sourcedata,
-                 daterange, 
-                 calibration, 
-                 freq='weekly', 
-                 use_cache=True, 
-                 save_results=True
+                 sourcedata:str,
+                 daterange:list, 
+                 calibration:int, 
+                 freq:str='weekly', 
+                 use_cache:bool=True, 
+                 save_results:bool=True
                  ):
         start = daterange[0] - calibration
         end = daterange[1]
@@ -55,22 +69,38 @@ class HistoricalData:
         cache_path = './cache/'+sourcedata+'_'+freq+'.pkl'
         self.load_data(cache_path, use_cache, save_results)
 
-    def load_data(self, cache_path, use_cache, save_results):
+    #--------------------------------------------------------------------------
+    # Method load_data
+    #--------------------------------------------------------------------------
+    def load_data(self, 
+                  cache_path:str, 
+                  use_cache:bool, 
+                  save_results:bool
+                  ):
         """Load data from Kenneth French's data library
         
         Inputs
         ------
-        cache_path: Path to the cache data file
-        use_cache: Boolean indicating whether to use cached data
-        save_results: Boolean indicating whether to save the results to cache
+        cache_path: str 
+            Path to the cache data file
+        use_cache: bool
+            Boolean indicating whether to use cached data
+        save_results: bool
+            Boolean indicating whether to save the results to cache
 
         Outputs
-        -------
-        arets: T x N array of asset returns for N assets and T observations
-        frets: T x M array of factor returns for M factors and T observations
-        riskfree: T x 1 array of risk-free returns
-        assets: List of asset names
-        features: List of feature names
+        ----------
+        Appends the following attributes to the object:
+        arets: pd.DataFrame 
+            T x N array of asset returns for N assets and T observations
+        frets: pd.DataFrame
+            T x M array of factor returns for M factors and T observations
+        riskfree: pd.Series
+            T x 1 array of risk-free returns
+        assets: list
+            List of asset names
+        features: list
+            List of feature names
         """
         if use_cache and os.path.exists(cache_path):
             frets = pd.read_pickle('./cache/factor_'+self.freq+'.pkl')

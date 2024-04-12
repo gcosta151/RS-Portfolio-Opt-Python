@@ -1,17 +1,17 @@
 # factormodel library
 #
 # Prepared by:    Giorgio Costa
-# Last revision:  25-Dec-2023
+# Last revision:  11-Apr-2024
 #
-#-------------------------------------------------------------------------------
+#===============================================================================
 # Import packages
-#-------------------------------------------------------------------------------
+#===============================================================================
 import pandas as pd
 import numpy as np
 
-#-------------------------------------------------------------------------------
+#===============================================================================
 # class FactorModel
-#-------------------------------------------------------------------------------
+#===============================================================================
 class FactorModel:
     """FactorModel object
     Use a linear regression model to estimate the asset means and covariance 
@@ -20,21 +20,37 @@ class FactorModel:
 
     Inputs
     ------
-    data: HistoricalData object containing the timeseries of asset and feature
+    data: HistoricalData 
+        HistoricalData object containing the timeseries of asset and feature
         returns
-    lookback: Number of observations to use to conduct the regression
-    rsmodel (Optional): Object containing a T x S timeseries of smoothed 
-        probabilities for S states and T observations, as well as the 
-        transition probabilities conditional on the current estimated state
+    lastdate: pd.Timestamp
+        End date for the regression sample
+    lookback: int
+        Number of observations to use to conduct the regression
+    rsmodel: HMM object. Default is None
+        HMM object containing a T x S timeseries of smoothed probabilities
+        for S states and T observations, as well as the transition 
+        probabilities conditional on the current estimated state
 
-    Outputs
+    Attributes
+    ----------
+    mu: list
+        list of N x 1 vectors of intercepts (regular and regime-switching)
+    sigma: list
+        list of N x N covariance matrices (regular and regime-switching)
+
+    Methods
     -------
-    FactorModel object with the following fields
-    mu: list of N x 1 vectors of intercepts (regular and regime-switching)
-    sigma: list of N x N covariance matrices (regular and regime-switching)
+    fit(data, lastdate, lookback)
+        Construct a factor model by performing a linear regression
+    fit_rs(data, lastdate, lookback, rsmodel)
+        Construct a factor model for each state in the regime-switching model
     """
-
-    def __init__(self, data, lastdate, lookback, rsmodel=None):
+    def __init__(self, 
+                 data, 
+                 lastdate:pd.Timestamp, 
+                 lookback:int, 
+                 rsmodel=None):
 
         self.mu = []
         self.sigma = []
@@ -46,23 +62,35 @@ class FactorModel:
             mu_rs, sigma_rs = self.fit_rs(data, lastdate, lookback, rsmodel)
             self.mu.append(mu_rs)
             self.sigma.append(sigma_rs)
-        
-    def fit(self, data, lastdate, lookback):
+    
+    #--------------------------------------------------------------------------
+    # Method fit
+    #--------------------------------------------------------------------------
+    def fit(self, 
+            data, 
+            lastdate:pd.Timestamp, 
+            lookback:int
+            ):
         """Construct a factor model by performing a linear regression
         The factor model is used to estimate the asset means and 
         covariance matrix
 
         Inputs
         ------
-        data: HistoricalData object containing the timeseries of asset and 
+        data: HistoricalData
+            HistoricalData object containing the timeseries of asset and 
             feature returns
-        lastdate: End date for the regression sample
-        lookback: Number of observations to use to conduct the regression
+        lastdate: pd.Timestamp
+            End date for the regression sample
+        lookback: int
+            Number of observations to use to conduct the regression
 
         Outputs
         -------
-        mu: N x 1 vector of intercepts 
-        sigma: N x N covariance matrix  
+        mu: np.array
+            N x 1 vector of intercepts 
+        sigma: np.array
+            N x N covariance matrix   
         """
         X = data.frets.loc[:lastdate, :]
         Y = data.arets.loc[:lastdate, :]
@@ -75,7 +103,15 @@ class FactorModel:
 
         return mu, sigma
     
-    def fit_rs(self, data, lastdate, lookback, rsmodel):
+    #--------------------------------------------------------------------------
+    # Method fit_rs
+    #--------------------------------------------------------------------------
+    def fit_rs(self, 
+               data, 
+               lastdate:pd.Timestamp, 
+               lookback:int, 
+               rsmodel
+               ):
         """Construct a factor model for each state in the regime-switching 
         model (rsmodel)
         1. For each state s, perform a linear regression and estimate mu 
@@ -86,19 +122,24 @@ class FactorModel:
 
         Inputs
         ------
-        data: HistoricalData object containing the timeseries of asset and 
+        data: HistoricalData
+            HistoricalData object containing the timeseries of asset and 
             feature returns
-        lastdate: End date for the regression sample
-        lookback: Number of observations to use to conduct the regression
-        rsmodel: Object containing a T x S timeseries of smoothed
-            probabilities for S states and T observations, as well as the 
-            transition probabilities conditional on the current estimated 
-            state
+        lastdate: pd.Timestamp
+            End date for the regression sample
+        lookback: int
+            Number of observations to use to conduct the regression
+        rsmodel: HMM object
+            HMM object containing a T x S timeseries of smoothed probabilities for 
+            S states and T observations, as well as the transition 
+            probabilities conditional on the current estimated state
 
         Outputs
         -------
-        mu: N x 1 vector of intercepts
-        sigma: N x N covariance matrix            
+        mu: np.array
+            N x 1 vector of intercepts 
+        sigma: np.array
+            N x N covariance matrix       
         """
         
         # Use linear regression for parameter estimation per state
@@ -131,22 +172,28 @@ class FactorModel:
 
         return mu, sigma
         
-#-------------------------------------------------------------------------------
+#===============================================================================
 # Function linreg
-#-------------------------------------------------------------------------------
-def linreg(X, Y):
+#===============================================================================
+def linreg(X:np.array, 
+           Y:np.array
+           ):
     """Regress matrix of targets Y against feature array X
     Note: Features are centered (de-meaned) by default
 
     Inputs
     ------
-    Y: T x N matrix with T observations and M targets 
-    X: T x M matrix with T observations and N features
+    Y: np.array
+        T x N matrix with T observations and M targets 
+    X: np.array
+        T x M matrix with T observations and N features
 
     Outputs
     -------
-    mu: N x 1 vector of intercepts 
-    sigma: N x N covariance matrix 
+    mu: np.array
+        N x 1 vector of intercepts 
+    sigma: np.array
+        N x N covariance matrix 
     """
     n_obs, n_features = X.shape
 
@@ -179,9 +226,9 @@ def linreg(X, Y):
 
     return mu, sigma
 
-#-------------------------------------------------------------------------------
+#===============================================================================
 # Function posdef
-#-------------------------------------------------------------------------------
+#===============================================================================
 def posdef(B):
     """Find the nearest positive definite matrix to the input matrix A
 
